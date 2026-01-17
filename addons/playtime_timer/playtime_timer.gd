@@ -7,18 +7,21 @@ extends Resource
 ##
 ## A count up timer specifically built to run for long period of time in a single scene.[br][br]
 ## NOTE: this timer itself is ignorant of multi session timing durations,
-## so if it is unloaded or freed while active,
+## so if it is unloaded or freed while active (not stopped),
 ## it will loose count of all time it was counting all the way back to the last time it was stopped.
 ## The starting and stopping of timers on application load, quit, pause, and resume is expected to
-## be handled externally by a [PlaytimeManagerNode]
+## be handled externally by a [Node] (such as [PlaytimeManager]).
 
-## Emitted when this timer is started. [ts] is the timestame in usec that the timer was started at.
+## Emitted when this timer is started. [ts] is the timestamp in usec that the timer was started at.
 signal started(ts:int)
-## Emitted when this timer is stopped. [ts] is the timestame in usec that the timer was stopped at.
+
+## Emitted when this timer is stopped. [ts] is the timestamp in usec that the timer was stopped at.
 signal stopped(ts:int)
-## Emitted when this timer is paused. [ts] is the timestame in usec that the timer was paused at.
+
+## Emitted when this timer is paused. [ts] is the timestamp in usec that the timer was paused at.
 signal paused(ts:int)
-## Emitted when this timer is resumed. [ts] is the timestame in usec that the timer was resumed at.
+
+## Emitted when this timer is resumed. [ts] is the timestamp in usec that the timer was resumed at.
 signal resumed(ts:int)
 
 ## Weather or not this timer is active. Will start or stop the timer
@@ -33,6 +36,7 @@ signal resumed(ts:int)
 			start_timer()
 		else:
 			stop_timer()
+
 ## Weather or not this timer is paused. Will pause or resume the timer
 ## when set to the appropriate [bool] value.
 @export var is_paused:bool:
@@ -45,15 +49,17 @@ signal resumed(ts:int)
 			pause_timer()
 		else:
 			resume_timer()
+
 ## The current time, and a [int] of passed microseconds, including both
-## the current counted time and prexisting time.
-## NOTE: When set, only the presisting time will be modified in order for the sum of
+## the current counted time and preexisting time.
+## NOTE: When set, only the preexisting time will be modified in order for the sum of
 ## both the the counted and preexisting time to match that of the set value.
 @export var total_time_usec:int:
 	get:
 		return get_total_time_usec()
 	set(_value):
 		set_total_time_usec(_value)
+
 ## Same as [total_time_usec], but returning a float value of seconds instead.
 ## See [total_time_usec] for more information.
 @export var total_time_sec:float:
@@ -61,9 +67,11 @@ signal resumed(ts:int)
 		return total_time_usec * 0.000001
 	set(_value):
 		total_time_usec = _value * 1000000
+
 ## The saved amount of time, in usec.[br]
-## NOTE This will not include the currented time counted in this timer is currently active,
-## but will once the timer is stopped (without being aborted).
+## NOTE This will not include the current time counted in this timer is currently active,
+## but will once the timer is stopped (without being aborted).[br]
+## This is the only value of this resource thats truly saved and loaded.
 @export var preexisting_time:int = 0
 
 ## When set, if the timer resource is active and
@@ -74,17 +82,17 @@ signal resumed(ts:int)
 var _start_session_timestamp:int = -1
 var _pause_session_timestamp:int = -1
 
-func _init(initial_time_usec:int = 0, auto_start := false):
+func _init(initial_time_usec:int = 0, auto_start := false) -> void:
 	preexisting_time = initial_time_usec
 
 	if auto_start:
 		start_timer()
 
-func _validate_property(property: Dictionary):
+func _validate_property(property: Dictionary) -> void:
 	if property.name == "_preexisting_time":
 		property.usage = PROPERTY_USAGE_NO_EDITOR
 
-func _notification(what:int):
+func _notification(what:int) -> void:
 	match(what):
 		NOTIFICATION_PREDELETE when emergency_stop_pre_delete and is_active:
 			stop_timer()
@@ -92,13 +100,14 @@ func _notification(what:int):
 func _to_string() -> String:
 	return str(total_time_sec) + " sec"
 
-## Adds (or removes, if negative) [b][prexisting_time][/b] to the timer.
-## This means that using this modifies only the 
-func add_time_usec(value:int):
+## Adds (or removes, if negative) [b][preexisting_time][/b] to the timer.
+## This means that using this modifies only the
+func add_time_usec(value:int) -> void:
 	preexisting_time += value
 	emit_changed()
 
-## Get the total time the timer has counted, including prexisting time and the current counted time,
+## Get the total time the timer has counted,
+## including preexisting time and the current counted time,
 ## in usec.
 func get_total_time_usec() -> int:
 	var ts:int = Time.get_ticks_usec()
@@ -109,16 +118,16 @@ func get_total_time_usec() -> int:
 			active_time_diff -= max(ts - _pause_session_timestamp, 0)
 	return preexisting_time + active_time_diff
 
-## Changed the prexisting time to match the set value, in usec.
-## NOTE When set, only the presisting time will be modified in order for the sum of
+## Changed the preexisting time to match the set value, in usec.
+## NOTE When set, only the preexisting time will be modified in order for the sum of
 ## both the the counted and preexisting time to match that of the set value.
-func set_total_time_usec(value:int):
+func set_total_time_usec(value:int) -> void:
 	var current_time:int = get_total_time_usec()
 	add_time_usec(value - current_time)
 
 ## Starts the timer and resets the current counted progress of the timer
-## (the time counted not including [preexisting_time])
-func start_timer(ts :int= -1):
+## (the time counted not including [preexisting_time]).
+func start_timer(ts:int = -1) -> void:
 	assert(not is_active)
 	if ts < 0:
 		ts = Time.get_ticks_usec()
@@ -129,9 +138,9 @@ func start_timer(ts :int= -1):
 	emit_changed()
 
 ## Stops the current timer, and if not [abort]ing, will add the counted time since the timer
-## was last started to the prexisting time, saving it.
+## was last started to the preexisting time, saving it.
 ## When [abort]ing, the counted time will be discarded instead.
-func stop_timer(abort:bool = false, ts :int= -1):
+func stop_timer(abort:bool = false, ts:int = -1) -> void:
 	assert(is_active)
 	if ts < 0:
 		ts = Time.get_ticks_usec()
@@ -144,7 +153,7 @@ func stop_timer(abort:bool = false, ts :int= -1):
 	emit_changed()
 
 ## Pauses the timer. Pausing can be done even when the timer is not active.
-func pause_timer(ts :int = -1):
+func pause_timer(ts:int = -1) -> void:
 	assert(not is_paused)
 	if ts < 0:
 		ts = Time.get_ticks_usec()
@@ -153,7 +162,7 @@ func pause_timer(ts :int = -1):
 	emit_changed()
 
 ## Resumes the timer. Resuming can be done even when the timer is not active.
-func resume_timer(ts:int = -1):
+func resume_timer(ts:int = -1) -> void:
 	assert(is_paused)
 	if ts < 0:
 		ts = Time.get_ticks_usec()

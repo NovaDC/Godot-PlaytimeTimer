@@ -7,22 +7,47 @@ extends Node
 ##
 ## A node and optionally an autoload singleton class that, when in the scene tree,
 ## allows for [PlaytimeTimer]s to be easily managed, created, removed, saved, and loaded;
-## without having to track them in a seprate node.
+## without having to track them in a separate node.[br]
 ## When used as a singleton, it will be under the name [PlaytimeManager].
-## The PlaytimeTimer plugin must be anabled for the singleton to be used,
-## however both [PlaytimeManagerNode] and [PlaytimeTimer] can be used without having to be enabled.
+## The PlaytimeTimer plugin must be enabled for the singleton to be used,
+## however both [PlaytimeManagerNode] and [PlaytimeTimer]
+## can be used without having to be enabled.[br]
+## [br]
+## [br]
+## This node attempts to automatically handle most common situations where a timer should be stopped
+## to prevent the loss of tracked time.[br]
+## However, this does not grantee that this will properly happen in every scenario.
+## This node currently automatically stops all timers on the following notifications:
+## [ul]
+## [const Node.NOTIFICATION_EXIT_TREE]
+## [const Node.NOTIFICATION_APPLICATION_PAUSED]
+## [const Node.NOTIFICATION_PREDELETE]
+## [const Node.NOTIFICATION_WM_CLOSE_REQUEST] (only if [member SceneTree.auto_accept_quit] is set)
+## [const Node.NOTIFICATION_WM_GO_BACK_REQUEST] (only if [member SceneTree.quit_on_go_back] is set)
+## [/ul]
+## Also, due to the nature of how
+## [const Node.NOTIFICATION_APPLICATION_PAUSED] is used on non desktop platforms,
+## all timers stopped specifically by a [const Node.NOTIFICATION_APPLICATION_PAUSED]
+## notification will be restarted form where
+## they left off if a [const Node.NOTIFICATION_APPLICATION_RESUMED] is received.
+## This is not to be confused with pausing the timers,
+## as pausing does not commit the final time difference to the memory of the timers.
+## See [url docs.godotengine.org/en/stable/tutorials/best_practices/godot_notifications.html]
+## for more information about this behaviour.
 
-const _PLAYTIME_TIMER_HYBERNATED_META_NAME := "hibernated"
+const _PLAYTIME_TIMER_HIBERNATED_META_NAME := "hibernated"
 
 ## A mapping of [String] timer names to their respective [PlaytimeTImers].
 ## Not particularly usefull when used as a singleton,
 ## but handy when adding this node to the tree manually.
 @export var timers := {}
+
 ## A collection of potential timer name [String]s that,
 ## if the timer exists, will be automatically started when the scene starts.
 ## Not particularly usefull when used as a singleton,
 ## but handy when adding this node to the tree manually.
-@export var autostart_timers:Array[String] = []
+@export var autostart_timers := PackedStringArray()
+
 ## Returns a dict mapping timer names to [float]s of their current counted time.
 @export var times:Dictionary:
 	get:
@@ -33,7 +58,7 @@ const _PLAYTIME_TIMER_HYBERNATED_META_NAME := "hibernated"
 # Since we already have to parse other notifications manually,
 # we can skip overriding methods like [method Node._ready]
 # and just parse that event here to.
-func _notification(what:int):
+func _notification(what:int) -> void:
 	match(what):
 		NOTIFICATION_ENTER_TREE, \
 		NOTIFICATION_READY:
@@ -62,16 +87,16 @@ func _to_string() -> String:
 ## If a timer with the same name already exists, it is replaced by this new one.
 ## Returns the newly created [PlaytimeTimer].
 func add_timer(timer_name:String,
-			   start := true,
-			   pause := false,
-			   initial_time_sec:float = 0
-			  ) -> PlaytimeTimer:
+				start := true,
+				pause := false,
+				initial_time_sec:float = 0
+				) -> PlaytimeTimer:
 	timers[timer_name] = PlaytimeTimer.new(initial_time_sec)
 	timers[timer_name].is_active = start
 	timers[timer_name].is_paused = pause
 	return timers[timer_name]
 
-## Checks if a certian timer exists in this [PlaytimeManagerNode].
+## Checks if a certain timer exists in this [PlaytimeManagerNode].
 func has_timer(timer_name:String) -> bool:
 	return timer_name in timers.keys()
 
@@ -79,55 +104,57 @@ func has_timer(timer_name:String) -> bool:
 ## only if the timer with that [timer_name] does not exist.
 ## Returns the [PlaytimeTimer] with the given name, weather its created or already existing.
 func try_add_timer(timer_name:String,
-				   start := true,
-				   pause := false,
-				   initial_time_sec:float = 0
-				  ) -> PlaytimeTimer:
+					start := true,
+					pause := false,
+					initial_time_sec:float = 0
+					) -> PlaytimeTimer:
 	if not has_timer(timer_name):
 		add_timer(timer_name, start, pause, initial_time_sec)
 	return timers[timer_name]
 
 ## Removes the timer with the given [timer_name] in this [PlaytimeManagerNode].
-func remove_timer(timer_name:String):
-	timers.erase(timer_name)
+func remove_timer(timer_name:String) -> bool:
+	return timers.erase(timer_name)
 
 ## Starts any stopped timers.
-func start_all():
+func start_all() -> void:
 	for timer in timers.values():
 		timer.is_active = true
 
 ## Stops any started timers.
 ## If [abort], the working values in the timers will [b]not[/b] be saved to the timers state,
 ## loosing any the time counted form when the timer was last started.
-func stop_all(abort := false):
+func stop_all(abort := false) -> void:
 	for timer in timers.values():
 		if timer.is_active:
 			timer.stop_timer(abort)
 
 # Starts timers specifically stopped by [method _unhibernate_all] from where they were.
-func _unhibernate_all():
+func _unhibernate_all() -> void:
 	for timer in timers.values():
-		if not timer.is_active and timer.get_meta(_PLAYTIME_TIMER_HYBERNATED_META_NAME, false):
-			timer.set_meta(_PLAYTIME_TIMER_HYBERNATED_META_NAME, false)
+		if not timer.is_active and timer.get_meta(_PLAYTIME_TIMER_HIBERNATED_META_NAME, false):
+			timer.set_meta(_PLAYTIME_TIMER_HIBERNATED_META_NAME, false)
 			timer.start_timer()
 
-# A special method that fully stops a timer but allows for [method _unhibernate_all] to restart it form where it was before.
-# This is not to be cunfused with pausing the timers, as pausing does not commit the time diffrence to the memory of the timers.
-func _hibernate_all():
+# A special method that fully stops a timer but allows for
+# [method _unhibernate_all] to restart it form where it was before.
+# This is not to be confused with pausing the timers,
+# as pausing does not commit the time difference to the memory of the timers.
+func _hibernate_all() -> void:
 	for timer in timers.values():
 		if timer.is_active:
-			timer.set_meta(_PLAYTIME_TIMER_HYBERNATED_META_NAME, true)
+			timer.set_meta(_PLAYTIME_TIMER_HIBERNATED_META_NAME, true)
 			timer.stop_timer()
 
 ## Pauses any unpaused timers.[br]
 ## NOTE: the timer does not need to be started for it to be paused.
-func pause_all():
+func pause_all() -> void:
 	for timer in timers.values():
 		timer.is_paused = true
 
 ## Resumes any paused timers.[br]
 ## NOTE: the timer does not need to be started for it to be resumed.
-func resume_all():
+func resume_all() -> void:
 	for timer in timers.values():
 		timer.is_paused = false
 
@@ -140,11 +167,11 @@ func get_times() -> Dictionary:
 
 ## Uses a dict mapping timer names to their current counted time to
 ## set all timers in this [PlaytimeManagerNode].
-func set_times(data:Dictionary, start_new := false, pause_new := false):
+func set_times(data:Dictionary, start_new := false, pause_new := false) -> void:
 	for old_key in timers.keys():
 		if old_key not in data.keys():
 			timers.erase(old_key)
-	
+
 	for new_key in data.keys():
 		if new_key in timers.keys():
 			timers[new_key].set_total_time_usec(data[new_key])
