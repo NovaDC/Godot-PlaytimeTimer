@@ -104,7 +104,7 @@ func start_all():
 func stop_all(abort := false):
 	for timer in timers.values():
 		if timer.is_active:
-			timer.stop_timer(false)
+			timer.stop_timer(abort)
 
 ## Pauses any unpaused timers.[br]
 ## NOTE: the timer does not need to be started for it to be paused.
