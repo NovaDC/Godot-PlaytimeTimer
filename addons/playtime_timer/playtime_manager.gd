@@ -10,29 +10,31 @@ extends Node
 ## without having to track them in a separate node.[br]
 ## When used as a singleton, it will be under the name [PlaytimeManager].
 ## The PlaytimeTimer plugin must be enabled for the singleton to be used,
-## however both [PlaytimeManagerNode] and [PlaytimeTimer]
+## however both [PlaytimeManagerNode]s and [PlaytimeTimer]s
 ## can be used without having to be enabled.[br]
 ## [br]
 ## [br]
 ## This node attempts to automatically handle most common situations where a timer should be stopped
 ## to prevent the loss of tracked time.[br]
 ## However, this does not grantee that this will properly happen in every scenario.
-## This node currently automatically stops all timers on the following notifications:
-## [ul]
-## [const Node.NOTIFICATION_EXIT_TREE]
-## [const Node.NOTIFICATION_APPLICATION_PAUSED]
-## [const Node.NOTIFICATION_PREDELETE]
-## [const Node.NOTIFICATION_WM_CLOSE_REQUEST] (only if [member SceneTree.auto_accept_quit] is set)
-## [const Node.NOTIFICATION_WM_GO_BACK_REQUEST] (only if [member SceneTree.quit_on_go_back] is set)
-## [/ul]
+## This node currently automatically stops all timers on the following notifications:[br]
+## [br]
+## - [constant Node.NOTIFICATION_EXIT_TREE][br]
+## - [constant Node.NOTIFICATION_APPLICATION_PAUSED][br]
+## - [constant Node.NOTIFICATION_PREDELETE][br]
+## - [constant Node.NOTIFICATION_WM_CLOSE_REQUEST]
+## (only if [member SceneTree.auto_accept_quit] is also set)[br]
+## - [constant Node.NOTIFICATION_WM_GO_BACK_REQUEST]
+## (only if [member SceneTree.quit_on_go_back] is also set)[br]
+## [br]
 ## Also, due to the nature of how
-## [const Node.NOTIFICATION_APPLICATION_PAUSED] is used on non desktop platforms,
-## all timers stopped specifically by a [const Node.NOTIFICATION_APPLICATION_PAUSED]
+## [constant Node.NOTIFICATION_APPLICATION_PAUSED] is used on non desktop platforms,
+## all timers stopped specifically by a [constant Node.NOTIFICATION_APPLICATION_PAUSED]
 ## notification will be restarted form where
-## they left off if a [const Node.NOTIFICATION_APPLICATION_RESUMED] is received.
+## they left off if a [constant Node.NOTIFICATION_APPLICATION_RESUMED] is received.
 ## This is not to be confused with pausing the timers,
 ## as pausing does not commit the final time difference to the memory of the timers.
-## See [url docs.godotengine.org/en/stable/tutorials/best_practices/godot_notifications.html]
+## See [url]docs.godotengine.org/en/stable/tutorials/best_practices/godot_notifications.html[/url]
 ## for more information about this behaviour.
 
 const _PLAYTIME_TIMER_HIBERNATED_META_NAME := "hibernated"

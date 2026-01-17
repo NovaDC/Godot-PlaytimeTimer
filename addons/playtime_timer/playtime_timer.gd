@@ -10,22 +10,26 @@ extends Resource
 ## so if it is unloaded or freed while active (not stopped),
 ## it will loose count of all time it was counting all the way back to the last time it was stopped.
 ## The starting and stopping of timers on application load, quit, pause, and resume is expected to
-## be handled externally by a [Node] (such as [PlaytimeManager]).
+## be handled externally by a [Node] (such as [PlaytimeManagerNode]s).
 
-## Emitted when this timer is started. [ts] is the timestamp in usec that the timer was started at.
+## Emitted when this timer is started.
+## [param ts] is the timestamp in usec that the timer was started at.
 signal started(ts:int)
 
-## Emitted when this timer is stopped. [ts] is the timestamp in usec that the timer was stopped at.
+## Emitted when this timer is stopped.
+## [param ts] is the timestamp in usec that the timer was stopped at.
 signal stopped(ts:int)
 
-## Emitted when this timer is paused. [ts] is the timestamp in usec that the timer was paused at.
+## Emitted when this timer is paused.
+## [param ts] is the timestamp in usec that the timer was paused at.
 signal paused(ts:int)
 
-## Emitted when this timer is resumed. [ts] is the timestamp in usec that the timer was resumed at.
+## Emitted when this timer is resumed.
+## [param ts] is the timestamp in usec that the timer was resumed at.
 signal resumed(ts:int)
 
 ## Weather or not this timer is active. Will start or stop the timer
-## when set to the appropriate [bool] value.
+## when set or unset, respectively.
 @export var is_active:bool:
 	get:
 		return _start_session_timestamp >= 0
@@ -38,7 +42,7 @@ signal resumed(ts:int)
 			stop_timer()
 
 ## Weather or not this timer is paused. Will pause or resume the timer
-## when set to the appropriate [bool] value.
+## when set or unset, respectively.
 @export var is_paused:bool:
 	get:
 		return _pause_session_timestamp >= 0
@@ -50,7 +54,7 @@ signal resumed(ts:int)
 		else:
 			resume_timer()
 
-## The current time, and a [int] of passed microseconds, including both
+## The current time, an [int] of passed microseconds, including both
 ## the current counted time and preexisting time.
 ## NOTE: When set, only the preexisting time will be modified in order for the sum of
 ## both the the counted and preexisting time to match that of the set value.
@@ -60,8 +64,8 @@ signal resumed(ts:int)
 	set(_value):
 		set_total_time_usec(_value)
 
-## Same as [total_time_usec], but returning a float value of seconds instead.
-## See [total_time_usec] for more information.
+## Same as [member total_time_usec], but returning a [float] value of seconds instead.
+## See [member total_time_usec] for more information.
 @export var total_time_sec:float:
 	get:
 		return total_time_usec * 0.000001
@@ -75,7 +79,7 @@ signal resumed(ts:int)
 @export var preexisting_time:int = 0
 
 ## When set, if the timer resource is active and
-## receives the [const Object.NOTIFICATION_PREDELETE]
+## receives the [constant Object.NOTIFICATION_PREDELETE]
 ## notification, it will automatically call [method stop_timer].
 @export var emergency_stop_pre_delete := true
 
@@ -100,7 +104,7 @@ func _notification(what:int) -> void:
 func _to_string() -> String:
 	return str(total_time_sec) + " sec"
 
-## Adds (or removes, if negative) [b][preexisting_time][/b] to the timer.
+## Adds (or removes, if negative) [b][member preexisting_time][/b] to the timer.
 ## This means that using this modifies only the
 func add_time_usec(value:int) -> void:
 	preexisting_time += value
@@ -126,7 +130,7 @@ func set_total_time_usec(value:int) -> void:
 	add_time_usec(value - current_time)
 
 ## Starts the timer and resets the current counted progress of the timer
-## (the time counted not including [preexisting_time]).
+## (the time counted not including [member preexisting_time]).
 func start_timer(ts:int = -1) -> void:
 	assert(not is_active)
 	if ts < 0:
@@ -137,9 +141,9 @@ func start_timer(ts:int = -1) -> void:
 	started.emit(ts)
 	emit_changed()
 
-## Stops the current timer, and if not [abort]ing, will add the counted time since the timer
+## Stops the current timer, and if not [param abort]ing, will add the counted time since the timer
 ## was last started to the preexisting time, saving it.
-## When [abort]ing, the counted time will be discarded instead.
+## When [param abort]ing, the counted time will be discarded instead.
 func stop_timer(abort:bool = false, ts:int = -1) -> void:
 	assert(is_active)
 	if ts < 0:
