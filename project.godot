@@ -10,10 +10,11 @@ config_version=5
 
 [application]
 
-config/name="PlaytimeTimer"
-config/version="v1.0.0.0"
+config/name="Godot-PlaytimeTimer"
+config/description="A count up timer specifically built to run for long period of time in a single scene, with a manager and optional autoload to ensure that the state is always safely handled."
+config/version="v1.1.0.0"
 config/features=PackedStringArray("4.5", "GL Compatibility")
-boot_splash/image="res://icon.png"
+boot_splash/image="uid://dswpwhdihqwx0"
 config/icon="res://addons/playtime_timer/icon.svg"
 
 [autoload]
