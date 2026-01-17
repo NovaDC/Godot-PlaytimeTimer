@@ -1,2 +1,75 @@
 # Normalize EOL for all files that Git considers text files.
-* text=auto eol=lf
+* text=auto eol=lf whitespace=trailing-space,space-before-tab
+
+resources/** -text filter=lfs diff=lfs merge=lfs
+**/resources/** -text filter=lfs diff=lfs merge=lfs
+
+/android/ binary filter=lfs diff=lfs merge=lfs
+
+**/.gitkeep -text
+
+*.gd text diff=python
+*.py text diff=python
+SConstruct text diff=python
+
+*.md text diff=md
+*.txt text diff=md
+
+*.c text diff=cpp
+*.cpp text diff=cpp
+*.h text diff=cpp
+*.hpp text diff=cpp
+
+*.cs text diff=cs
+
+*.tres text diff=ini
+*.tscn text diff=ini
+*.import text diff=ini
+*.cfg text diff=ini
+
+*.html text diff=html
+*.htm text diff=html
+*.svg text diff=html
+*.css text diff=css
+*.js text
+
+*.scn binary
+*.res binary
+
+*.doc binary merge=word
+*.docx binary merge=word
+*.pdf binary filter=lfs diff=lfs merge=lfs
+
+*.7z binary filter=lfs diff=lfs merge=lfs
+*.zip binary filter=lfs diff=lfs merge=lfs
+*.tar binary filter=lfs diff=lfs merge=lfs
+*.rar binary filter=lfs diff=lfs merge=lfs
+*.bz binary filter=lfs diff=lfs merge=lfs
+*.gz binary filter=lfs diff=lfs merge=lfs
+
+*.jar binary filter=lfs diff=lfs merge=lfs
+
+*.exe binary filter=lfs diff=lfs merge=lfs
+
+*.elf binary filter=lfs diff=lfs merge=lfs
+*.deb binary filter=lfs diff=lfs merge=lfs
+*.appimage binary filter=lfs diff=lfs merge=lfs
+*.x86_64 binary filter=lfs diff=lfs merge=lfs
+*.x86_32 binary filter=lfs diff=lfs merge=lfs
+*.arm64 binary filter=lfs diff=lfs merge=lfs
+*.arm32 binary filter=lfs diff=lfs merge=lfs
+
+*.bmp binary filter=lfs diff=lfs merge=lfs
+*.png binary filter=lfs diff=lfs merge=lfs
+*.jpg binary filter=lfs diff=lfs merge=lfs
+*.jpeg binary filter=lfs diff=lfs merge=lfs
+*.webp binary filter=lfs diff=lfs merge=lfs
+
+*.wav binary filter=lfs diff=lfs merge=lfs
+*.mp3 binary filter=lfs diff=lfs merge=lfs
+*.ogg binary filter=lfs diff=lfs merge=lfs
+*.flac binary filter=lfs diff=lfs merge=lfs
+
+*.avi binary filter=lfs diff=lfs merge=lfs
+*.mp4 binary filter=lfs diff=lfs merge=lfs
+*.mov binary filter=lfs diff=lfs merge=lfs
