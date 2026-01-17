@@ -12,10 +12,7 @@ extends Node
 ## The PlaytimeTimer plugin must be anabled for the singleton to be used,
 ## however both [PlaytimeManagerNode] and [PlaytimeTimer] can be used without having to be enabled.
 
-## String values that when returned by [OS.get_name],
-## will ensure that [NOTIFICATION_WM_GO_BACK_REQUEST]
-## is treated the same as [NOTIFICATION_WM_CLOSE_REQUEST]
-const BACK_IS_CLOSE_OS_NAMES:Array[String] = ["Android"]
+const _PLAYTIME_TIMER_HYBERNATED_META_NAME := "hibernated"
 
 ## A mapping of [String] timer names to their respective [PlaytimeTImers].
 ## Not particularly usefull when used as a singleton,
@@ -33,29 +30,30 @@ const BACK_IS_CLOSE_OS_NAMES:Array[String] = ["Android"]
 	set(_value):
 		set_times(_value)
 
+# Since we already have to parse other notifications manually,
+# we can skip overriding methods like [method Node._ready]
+# and just parse that event here to.
 func _notification(what:int):
 	match(what):
-		NOTIFICATION_WM_CLOSE_REQUEST, \
-		NOTIFICATION_APPLICATION_PAUSED, \
-		NOTIFICATION_PREDELETE, \
-		NOTIFICATION_EXIT_TREE, \
-		NOTIFICATION_CRASH, \
-		NOTIFICATION_DISABLED:
-			stop_all()
-		NOTIFICATION_WM_GO_BACK_REQUEST \
-		when get_tree().quit_on_go_back and OS.get_name() in BACK_IS_CLOSE_OS_NAMES:
-			stop_all()
 		NOTIFICATION_ENTER_TREE, \
-		NOTIFICATION_READY, \
-		NOTIFICATION_APPLICATION_RESUMED, \
-		NOTIFICATION_ENABLED:
+		NOTIFICATION_READY:
 			for timer_name in autostart_timers:
 				if not timers.has(timer_name):
 					timers[timer_name].start_timer(0)
-		NOTIFICATION_PAUSED:
-			pause_all()
-		NOTIFICATION_UNPAUSED:
-			resume_all()
+
+		NOTIFICATION_WM_CLOSE_REQUEST when get_tree().auto_accept_quit:
+			stop_all()
+		NOTIFICATION_WM_GO_BACK_REQUEST when get_tree().quit_on_go_back:
+			stop_all()
+
+		NOTIFICATION_EXIT_TREE, \
+		NOTIFICATION_PREDELETE:
+			stop_all()
+
+		NOTIFICATION_APPLICATION_PAUSED:
+			_hibernate_all()
+		NOTIFICATION_APPLICATION_RESUMED:
+			_unhibernate_all()
 
 func _to_string() -> String:
 	return get_json_times()
@@ -105,6 +103,21 @@ func stop_all(abort := false):
 	for timer in timers.values():
 		if timer.is_active:
 			timer.stop_timer(abort)
+
+# Starts timers specifically stopped by [method _unhibernate_all] from where they were.
+func _unhibernate_all():
+	for timer in timers.values():
+		if not timer.is_active and timer.get_meta(_PLAYTIME_TIMER_HYBERNATED_META_NAME, false):
+			timer.set_meta(_PLAYTIME_TIMER_HYBERNATED_META_NAME, false)
+			timer.start_timer()
+
+# A special method that fully stops a timer but allows for [method _unhibernate_all] to restart it form where it was before.
+# This is not to be cunfused with pausing the timers, as pausing does not commit the time diffrence to the memory of the timers.
+func _hibernate_all():
+	for timer in timers.values():
+		if timer.is_active:
+			timer.set_meta(_PLAYTIME_TIMER_HYBERNATED_META_NAME, true)
+			timer.stop_timer()
 
 ## Pauses any unpaused timers.[br]
 ## NOTE: the timer does not need to be started for it to be paused.
