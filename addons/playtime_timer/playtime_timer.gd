@@ -15,11 +15,11 @@ extends Resource
 ## Emitted when this timer is started. [ts] is the timestame in usec that the timer was started at.
 signal started(ts:int)
 ## Emitted when this timer is stopped. [ts] is the timestame in usec that the timer was stopped at.
-signal stopped(int)
+signal stopped(ts:int)
 ## Emitted when this timer is paused. [ts] is the timestame in usec that the timer was paused at.
-signal paused(int)
+signal paused(ts:int)
 ## Emitted when this timer is resumed. [ts] is the timestame in usec that the timer was resumed at.
-signal resumed(int)
+signal resumed(ts:int)
 
 ## Weather or not this timer is active. Will start or stop the timer
 ## when set to the appropriate [bool] value.
