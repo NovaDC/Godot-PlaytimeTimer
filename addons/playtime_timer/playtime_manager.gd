@@ -156,18 +156,34 @@ func get_json_times() -> String:
 	return JSON.stringify(get_times)
 
 ## Sets the current timers in this [PlaytimeManagerNode] form the given json string.
-func set_json_times(data:String):
+func set_json_times(data:String) -> Error:
 	var json := JSON.new()
-	assert(json.parse(data) == OK)
-	set_times(json.get_data())
+	var err:int = json.parse(data)
+	if err != OK:
+		return err
+	if typeof(json.data) != TYPE_DICTIONARY:
+		return ERR_INVALID_DATA
+	set_times(json.data)
+	return OK
 
 ## Saves a json dict mapping of timer names to their current counted values as a json text file.
-func save_times(path:String):
-	var f = FileAccess.open(path, FileAccess.WRITE)
-	f.store_string(get_json_times())
+func save_times(path:String) -> Error:
+	var f := FileAccess.open(path, FileAccess.WRITE)
+	if f == null:
+		return FileAccess.get_open_error()
+	var ok := f.store_string(get_json_times())
+	if not ok:
+		return f.get_error()
+	return OK
 
 ## Loads a json dict mapping of timer names to their current counted values from the path.
-func load_times(path:String):
-	assert(FileAccess.file_exists(path))
-	var f = FileAccess.open(path, FileAccess.READ)
-	set_json_times(f.get_as_text())
+func load_times(path:String) -> Error:
+	if not FileAccess.file_exists(path):
+		return ERR_FILE_NOT_FOUND
+	var f := FileAccess.open(path, FileAccess.READ)
+	if f == null:
+		return FileAccess.get_open_error()
+	var text := f.get_as_text()
+	if text.is_empty():
+		return f.get_error()
+	return set_json_times(text)
