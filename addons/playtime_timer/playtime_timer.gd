@@ -69,8 +69,11 @@ signal resumed(int)
 var _start_session_timestamp:int = -1
 var _pause_session_timestamp:int = -1
 
-func _init(initial_time_usec:int = 0):
+func _init(initial_time_usec:int = 0, auto_start := false):
 	preexisting_time = initial_time_usec
+
+	if auto_start:
+		start_timer()
 
 func _validate_property(property: Dictionary):
 	if property.name == "_preexisting_time":
