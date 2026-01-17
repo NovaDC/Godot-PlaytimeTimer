@@ -66,6 +66,11 @@ signal resumed(ts:int)
 ## but will once the timer is stopped (without being aborted).
 @export var preexisting_time:int = 0
 
+## When set, if the timer resource is active and
+## receives the [const Object.NOTIFICATION_PREDELETE]
+## notification, it will automatically call [method stop_timer].
+@export var emergency_stop_pre_delete := true
+
 var _start_session_timestamp:int = -1
 var _pause_session_timestamp:int = -1
 
@@ -78,6 +83,11 @@ func _init(initial_time_usec:int = 0, auto_start := false):
 func _validate_property(property: Dictionary):
 	if property.name == "_preexisting_time":
 		property.usage = PROPERTY_USAGE_NO_EDITOR
+
+func _notification(what:int):
+	match(what):
+		NOTIFICATION_PREDELETE when emergency_stop_pre_delete and is_active:
+			stop_timer()
 
 func _to_string() -> String:
 	return str(total_time_sec) + " sec"
