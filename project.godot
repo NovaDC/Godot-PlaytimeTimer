@@ -13,7 +13,7 @@ config_version=5
 config/name="PlaytimeTimer"
 config/version="v1.0.0.0"
 config/features=PackedStringArray("4.5", "GL Compatibility")
-boot_splash/image="res://addons/playtime_timer/icon.png"
+boot_splash/image="res://icon.png"
 config/icon="res://addons/playtime_timer/icon.svg"
 
 [autoload]
