@@ -1,5 +1,5 @@
 @tool
-@icon("res://addons/playtime_timer/icon.svg")
+@icon("./icon.svg")
 class_name PlaytimeTimer
 extends Resource
 

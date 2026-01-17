@@ -1,11 +1,12 @@
 @tool
+@icon("./icon.svg")
 extends EditorPlugin
 
 const PLUGIN_NAME := "PlaytimeTimer"
 const PLUGIN_NAME_INTERNAL := "playtime_timer"
-const PLUGIN_ICON:Texture2D = preload("res://addons/playtime_timer/icon.svg")
+const PLUGIN_ICON:Texture2D = preload("./icon.svg")
 const AUTOLOAD_NAME := "PlaytimeManager"
-const AUTOLOAD_SCRIPT := "res://addons/playtime_timer/playtime_manager.gd"
+const AUTOLOAD_SCRIPT := "./playtime_manager.gd"
 
 func _enter_tree():
 	if EditorInterface.is_plugin_enabled(PLUGIN_NAME_INTERNAL):
